@@ -68,8 +68,8 @@ data "aws_cloudfront_cache_policy" "managed-cache-disabled" {
 
 resource "aws_cloudfront_distribution" "root-portfolio-distribution" {
   origin {
-    domain_name              = aws_s3_bucket_website_configuration.root-website-config.website_endpoint
-    origin_id                = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
+    domain_name = aws_s3_bucket_website_configuration.root-website-config.website_endpoint
+    origin_id   = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
 
     custom_origin_config {
       http_port              = "80"
