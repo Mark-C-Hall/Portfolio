@@ -3,11 +3,11 @@ provider "aws" {
 }
 
 data "aws_route53_zone" "zone" {
-  name = "${var.app_name}"
+  name = var.app_name
 }
 
 data "aws_acm_certificate" "cert" {
-  domain   = "${var.app_name}"
+  domain   = var.app_name
   statuses = ["ISSUED"]
 }
 
@@ -45,7 +45,7 @@ resource "aws_s3_bucket_policy" "allow_access_from_cloudfront_distribution" {
 
 data "aws_iam_policy_document" "allow_access_from_cloudfront_distribution" {
   statement {
-    sid="AllowCloudFrontServicePrincipal"
+    sid = "AllowCloudFrontServicePrincipal"
 
     principals {
       type        = "Service"
@@ -56,16 +56,16 @@ data "aws_iam_policy_document" "allow_access_from_cloudfront_distribution" {
 
     resources = ["${aws_s3_bucket.portfolio.arn}/*"]
 
-    condition  {
-      test = "StringEquals"
+    condition {
+      test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values = [aws_cloudfront_distribution.portfolio-distribution.arn]
+      values   = [aws_cloudfront_distribution.portfolio-distribution.arn]
     }
   }
 }
 
 resource "aws_s3_bucket" "root-portfolio" {
-  bucket = "${var.app_name}"
+  bucket = var.app_name
 
   tags = {
     Name        = "Root-Portfolio-Bucket"
@@ -99,32 +99,6 @@ resource "aws_s3_bucket_website_configuration" "root-website-config" {
   }
 }
 
-resource "aws_s3_bucket_policy" "allow_root_access_from_cloudfront_distribution" {
-  bucket = aws_s3_bucket.root-portfolio.id
-  policy = data.aws_iam_policy_document.allow_root_access_from_cloudfront_distribution.json
-}
-
-data "aws_iam_policy_document" "allow_root_access_from_cloudfront_distribution" {
-  statement {
-    sid="AllowCloudFrontServicePrincipal"
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-
-    actions = ["s3:GetObject"]
-
-    resources = ["${aws_s3_bucket.root-portfolio.arn}/*"]
-
-    condition  {
-      test = "StringEquals"
-      variable = "AWS:SourceArn"
-      values = [aws_cloudfront_distribution.root-portfolio-distribution.arn]
-    }
-  }
-}
-
 resource "aws_cloudfront_distribution" "portfolio-distribution" {
   origin {
     domain_name              = aws_s3_bucket.portfolio.bucket_regional_domain_name
@@ -139,9 +113,9 @@ resource "aws_cloudfront_distribution" "portfolio-distribution" {
   aliases = ["www.${var.app_name}"]
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = aws_s3_bucket.portfolio.bucket_regional_domain_name
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = aws_s3_bucket.portfolio.bucket_regional_domain_name
 
     forwarded_values {
       query_string = false
@@ -159,7 +133,7 @@ resource "aws_cloudfront_distribution" "portfolio-distribution" {
   }
 
   restrictions {
-    geo_restriction{
+    geo_restriction {
       restriction_type = "none"
     }
   }
@@ -195,20 +169,26 @@ data "aws_cloudfront_cache_policy" "managed-cache-disabled" {
 
 resource "aws_cloudfront_distribution" "root-portfolio-distribution" {
   origin {
-    domain_name              = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.default.id
+    domain_name              = aws_s3_bucket_website_configuration.root-website-config.website_endpoint
     origin_id                = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
+
+    custom_origin_config {
+      http_port              = "80"
+      https_port             = "443"
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
   }
 
-  enabled             = true
-  is_ipv6_enabled     = true
+  enabled         = true
+  is_ipv6_enabled = true
 
   aliases = ["${var.app_name}"]
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = aws_s3_bucket.root-portfolio.bucket_regional_domain_name
 
     forwarded_values {
       query_string = false
@@ -225,7 +205,7 @@ resource "aws_cloudfront_distribution" "root-portfolio-distribution" {
   }
 
   restrictions {
-    geo_restriction{
+    geo_restriction {
       restriction_type = "none"
     }
   }
@@ -247,7 +227,7 @@ resource "aws_route53_record" "www" {
   zone_id = data.aws_route53_zone.zone.zone_id
   name    = "www.${var.app_name}"
   type    = "A"
-  
+
   alias {
     name                   = aws_cloudfront_distribution.portfolio-distribution.domain_name
     zone_id                = aws_cloudfront_distribution.portfolio-distribution.hosted_zone_id
@@ -257,9 +237,9 @@ resource "aws_route53_record" "www" {
 
 resource "aws_route53_record" "root" {
   zone_id = data.aws_route53_zone.zone.zone_id
-  name    = "${var.app_name}"
+  name    = var.app_name
   type    = "A"
-  
+
   alias {
     name                   = aws_cloudfront_distribution.root-portfolio-distribution.domain_name
     zone_id                = aws_cloudfront_distribution.root-portfolio-distribution.hosted_zone_id
@@ -271,7 +251,7 @@ resource "aws_route53_record" "www-ipv6" {
   zone_id = data.aws_route53_zone.zone.zone_id
   name    = "www.${var.app_name}"
   type    = "AAAA"
-  
+
   alias {
     name                   = aws_cloudfront_distribution.portfolio-distribution.domain_name
     zone_id                = aws_cloudfront_distribution.portfolio-distribution.hosted_zone_id
@@ -281,9 +261,9 @@ resource "aws_route53_record" "www-ipv6" {
 
 resource "aws_route53_record" "root-ipv6" {
   zone_id = data.aws_route53_zone.zone.zone_id
-  name    = "${var.app_name}"
+  name    = var.app_name
   type    = "AAAA"
-  
+
   alias {
     name                   = aws_cloudfront_distribution.root-portfolio-distribution.domain_name
     zone_id                = aws_cloudfront_distribution.root-portfolio-distribution.hosted_zone_id
