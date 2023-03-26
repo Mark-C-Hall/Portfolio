@@ -43,7 +43,7 @@ jobs:
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --acl public-read --delete
+          args: --delete
           source_dir: ./public
           dest_dir: s3://www.markchall.com/
         env:
