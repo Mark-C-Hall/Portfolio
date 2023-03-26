@@ -52,11 +52,10 @@ jobs:
           SOURCE_DIR: 'public'
 
       - name: Invalidate CloudFront cache
-        uses: crazymax/aws-cloudfront-invalidate-action@v1.2.1
-        with:
-          distribution-id: E273DI7MU0V490
-          path: '/*'
+        uses: awact/cloudfront-action@master
         env:
-          AWS_REGION: us-east-1
+          SOURCE_PATH: './public'
+          AWS_REGION: 'us-east-1'
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
