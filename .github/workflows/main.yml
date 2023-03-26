@@ -44,12 +44,12 @@ jobs:
         uses: jakejarvis/s3-sync-action@master
         with:
           args: --delete
+          source_dir: ./public
         env:
           AWS_S3_BUCKET: www.markchall.com
           AWS_REGION: us-east-1
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          SOURCE_DIR: './public'
 
       - name: Invalidate CloudFront cache
         uses: awact/cloudfront-action@master
