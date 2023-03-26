@@ -4,10 +4,10 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "lab-tf-state"
+    bucket         = "lab.markchall.com-terraform-state"
     key            = "portfolio/terraform.tfstate"
-    region         = "us-east-2"
-    dynamodb_table = "terraform-state-locks"
+    region         = "us-east-1"
+    dynamodb_table = "lab-terraform-locks"
     encrypt        = true
   }
 }
