@@ -51,7 +51,7 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          aws s3 sync ./public s3://www.markchall.com --delete
+          aws s3 sync /home/runner/work/Portfolio/Portfolio/build-artifact s3://www.markchall.com --delete
 
       - name: Invalidate CloudFront cache
         run: |
