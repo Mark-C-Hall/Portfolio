@@ -1,5 +1,8 @@
 name: Build and Deploy to S3
 
+permissions:
+  id-token: write
+
 on:
   push:
     branches:
@@ -16,7 +19,7 @@ jobs:
       - name: Use Node.js 16.x
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: "16.x"
 
       - name: Install dependencies
         run: npm install
@@ -39,23 +42,17 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-artifact
-    
-      - name: Deploy to S3
-        uses: jakejarvis/s3-sync-action@master
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          args: --delete
-          source_dir: ./public
-        env:
-          AWS_S3_BUCKET: www.markchall.com
-          AWS_REGION: us-east-1
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::998908665479:role/github-actions-role
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./public s3://www.markchall.com --delete
 
       - name: Invalidate CloudFront cache
-        uses: awact/cloudfront-action@master
-        env:
-          SOURCE_PATH: '/*'
-          AWS_REGION: 'us-east-1'
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION_ID }} --paths "/*"
